@@ -1,4 +1,4 @@
-module github.com/zaytcevcom/hw01_hello_otus
+module github.com/zaytcevcom/otus-go/hw01_hello_otus
 
 go 1.19
 
