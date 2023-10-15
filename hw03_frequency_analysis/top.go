@@ -14,7 +14,7 @@ func Top10(str string) []string {
 	str = strings.TrimSpace(str)
 
 	if str == "" {
-		return make([]string, 0)
+		return nil
 	}
 
 	arr := getWordsRate(strings.Fields(str))
@@ -27,15 +27,12 @@ func Top10(str string) []string {
 		return arr[i].Text < arr[j].Text
 	})
 
-	result := make([]string, 10)
-	i := 0
+	result := make([]string, 0, 10)
 
 	for _, v := range arr {
-		result[i] = v.Text
+		result = append(result, v.Text)
 
-		i++
-
-		if i == 10 {
+		if len(result) == 10 {
 			break
 		}
 	}
@@ -50,13 +47,10 @@ func getWordsRate(words []string) []Word {
 		wordMap[word]++
 	}
 
-	result := make([]Word, len(wordMap))
-
-	i := 0
+	result := make([]Word, 0, len(wordMap))
 
 	for text, count := range wordMap {
-		result[i] = Word{Text: text, Rate: count}
-		i++
+		result = append(result, Word{Text: text, Rate: count})
 	}
 
 	return result
