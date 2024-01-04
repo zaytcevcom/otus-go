@@ -77,14 +77,14 @@ func validateWithTag(fieldName string, field reflect.Value, tag string) error {
 		var err error
 		var vErrors []ValidationError
 
-		switch field.Kind() {
-		case reflect.Int:
+		switch {
+		case field.Kind() == reflect.Int:
 			vErrors, err = validateInt(fieldName, field, data)
 
-		case reflect.String:
+		case field.Kind() == reflect.String:
 			vErrors, err = validateString(fieldName, field, data)
 
-		case reflect.Slice:
+		case field.Kind() == reflect.Slice:
 			vErrors, err = validateSlice(fieldName, field, tag)
 
 		default:
