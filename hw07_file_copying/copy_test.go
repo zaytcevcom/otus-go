@@ -8,8 +8,7 @@ import (
 )
 
 func TestCopy(t *testing.T) {
-	tmpFile, _ := os.CreateTemp("", "test")
-	defer os.Remove(tmpFile.Name())
+	tmpFile, _ := os.CreateTemp(t.TempDir(), "test")
 
 	tests := []struct {
 		name      string
@@ -80,8 +79,10 @@ func TestCopyFailed(t *testing.T) {
 	tmpFile, _ := os.CreateTemp("", "test")
 	defer os.Remove(tmpFile.Name())
 
+	fromPath := "testdata/input.txt"
+
 	t.Run("Offset exceeds file size (empty file)", func(t *testing.T) {
-		fromPath := "testdata/empty.txt"
+		fromPath = "testdata/empty.txt"
 		toPath := tmpFile.Name()
 		offset := int64(40)
 		limit := int64(0)
@@ -91,12 +92,19 @@ func TestCopyFailed(t *testing.T) {
 	})
 
 	t.Run("Offset exceeds file size", func(t *testing.T) {
-		fromPath := "testdata/input.txt"
 		toPath := tmpFile.Name()
 		offset := int64(1000000)
 		limit := int64(0)
 
 		err := Copy(fromPath, toPath, offset, limit)
 		assert.EqualError(t, err, ErrOffsetExceedsFileSize.Error())
+	})
+
+	t.Run("Same file", func(t *testing.T) {
+		offset := int64(1000000)
+		limit := int64(0)
+
+		err := Copy(fromPath, fromPath, offset, limit)
+		assert.EqualError(t, err, "same files")
 	})
 }

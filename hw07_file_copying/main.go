@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 )
@@ -23,14 +22,7 @@ func main() {
 
 	err := Copy(from, to, offset, limit)
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrUnsupportedFile):
-			fmt.Println("Error: Unsupported file")
-		case errors.Is(err, ErrOffsetExceedsFileSize):
-			fmt.Println("Error: Offset exceeds file size")
-		default:
-			fmt.Println("Error: " + err.Error())
-		}
+		fmt.Printf("Error: %s\n", err)
 
 		return
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/cheggaaa/pb/v3"
 )
@@ -14,6 +15,11 @@ var (
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
+	err := checkSameFile(fromPath, toPath)
+	if err != nil {
+		return err
+	}
+
 	src, err := os.Open(fromPath)
 	if err != nil {
 		return err
@@ -34,7 +40,11 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 
 	if offset > 0 {
-		_, _ = src.Seek(offset, io.SeekStart)
+		_, err = src.Seek(offset, io.SeekStart)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	dst, err := os.Create(toPath)
@@ -47,10 +57,26 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	_, err = io.CopyN(dst, bar.NewProxyReader(src), limit)
 	bar.Finish()
 
+	if err != nil && !errors.Is(err, io.EOF) {
+		return err
+	}
+
+	return nil
+}
+
+func checkSameFile(fromPath, toPath string) error {
+	absFromPath, err := filepath.Abs(fromPath)
 	if err != nil {
-		if !errors.Is(err, io.EOF) {
-			return err
-		}
+		return ErrUnsupportedFile
+	}
+
+	absToPath, err := filepath.Abs(toPath)
+	if err != nil {
+		return ErrUnsupportedFile
+	}
+
+	if absFromPath == absToPath {
+		return errors.New("same files")
 	}
 
 	return nil
