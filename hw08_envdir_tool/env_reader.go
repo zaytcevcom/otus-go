@@ -74,7 +74,12 @@ func getValue(dir string, fileName string) (string, error) {
 	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
-	scanner.Scan()
+	if !scanner.Scan() {
+		if err = scanner.Err(); err != nil {
+			return "", err
+		}
+		return "", nil
+	}
 
 	return scanner.Text(), err
 }

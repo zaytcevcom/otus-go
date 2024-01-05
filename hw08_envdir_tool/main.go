@@ -19,5 +19,5 @@ func main() {
 		return
 	}
 
-	RunCmd(os.Args[2:], env)
+	os.Exit(RunCmd(os.Args[2:], env))
 }

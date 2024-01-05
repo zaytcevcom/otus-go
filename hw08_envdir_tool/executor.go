@@ -40,17 +40,10 @@ func getNewEnv(env Environment) map[string]string {
 	}
 
 	for key, value := range env {
-		_, ok := result[key]
-		if !ok {
-			if !value.NeedRemove {
-				result[key] = value.Value
-			}
+		if value.NeedRemove {
+			delete(result, key)
 		} else {
-			if value.NeedRemove {
-				delete(result, key)
-			} else {
-				result[key] = value.Value
-			}
+			result[key] = value.Value
 		}
 	}
 
