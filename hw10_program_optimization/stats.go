@@ -3,9 +3,10 @@ package hw10programoptimization
 import (
 	"bufio"
 	"fmt"
-	"github.com/mailru/easyjson"
 	"io"
 	"strings"
+
+	"github.com/mailru/easyjson"
 )
 
 type DomainStat map[string]int
@@ -22,7 +23,6 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 type users [100_000]User
 
 func getUsers(r io.Reader) (result users, err error) {
-
 	scanner := bufio.NewScanner(r)
 
 	var i int
@@ -43,6 +43,8 @@ func getUsers(r io.Reader) (result users, err error) {
 
 func countDomains(u users, domain string) (DomainStat, error) {
 	result := make(DomainStat)
+
+	domain = strings.ToLower(domain)
 
 	for _, user := range u {
 		splitEmail := strings.Split(user.Email, "@")
