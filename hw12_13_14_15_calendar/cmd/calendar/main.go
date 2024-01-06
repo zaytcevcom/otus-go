@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,7 +18,7 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "configs/config.json", "Path to configuration file")
 }
 
 func main() {
@@ -28,13 +29,26 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	config, err := LoadConfig(configFile)
+	if err != nil {
+		fmt.Println("Error loading config: ", err)
+		return
+	}
 
-	storage := memorystorage.New()
+	logg := logger.New(config.Logger.Level, nil)
+
+	var storage app.Storage
+
+	if config.IsMemoryStorage {
+		storage = memorystorage.New()
+	} else {
+		fmt.Println("No SQL storage")
+		return
+	}
+
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar)
+	server := internalhttp.NewServer(logg, calendar, config.Server.Host, config.Server.Port)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

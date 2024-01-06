@@ -2,25 +2,52 @@ package app
 
 import (
 	"context"
+	"errors"
+	"time"
+
+	"github.com/zaytcevcom/otus-go/hw12_13_14_15_calendar/internal/storage"
 )
 
-type App struct { // TODO
+type App struct {
+	logger  Logger
+	storage Storage
 }
 
-type Logger interface { // TODO
+type Logger interface {
+	Debug(msg string)
+	Info(msg string)
+	Warn(msg string)
+	Error(msg string)
 }
 
-type Storage interface { // TODO
+type Storage interface {
+	CreateEvent(event storage.Event) error
+	UpdateEvent(id string, event storage.Event) error
+	DeleteEvent(id string) error
+	GetEventsByDay(time time.Time) []storage.Event
+	GetEventsByWeek(time time.Time) []storage.Event
+	GetEventsByMonth(time time.Time) []storage.Event
 }
 
 func New(logger Logger, storage Storage) *App {
-	return &App{}
+	return &App{
+		logger:  logger,
+		storage: storage,
+	}
 }
 
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	// TODO
-	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
-}
+// Зачем тут нужен контекст?
+func (a *App) CreateEvent(_ context.Context, id, title string) (string, error) {
+	err := a.storage.CreateEvent(storage.Event{ID: id, Title: title})
 
-// TODO
+	if errors.Is(err, storage.ErrDateBusy) {
+		a.logger.Debug(storage.ErrDateBusy.Error())
+		return "", storage.ErrDateBusy
+	} else if err != nil {
+		return "", err
+	}
+
+	a.logger.Debug("Created event: " + id)
+
+	return id, nil
+}

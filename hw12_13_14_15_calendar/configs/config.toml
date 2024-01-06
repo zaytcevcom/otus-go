@@ -1,5 +1,8 @@
 [logger]
 level = "INFO"
 
-# TODO
-# ...
+[server]
+host = "localhost"
+port = "8080"
+
+is_memory_storage = "true"
