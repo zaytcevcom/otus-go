@@ -1,8 +1,8 @@
+isMemoryStorage = true
+
 [logger]
 level = "INFO"
 
 [server]
 host = "localhost"
-port = "8080"
-
-is_memory_storage = "true"
+port = 8888

@@ -1,10 +1,10 @@
 {
+  "isMemoryStorage": true,
   "logger": {
     "level": "INFO"
   },
   "server": {
     "host": "localhost",
-    "port": 8080
-  },
-  "isMemoryStorage": true
+    "port": 8888
+  }
 }

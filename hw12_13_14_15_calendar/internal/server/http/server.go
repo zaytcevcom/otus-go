@@ -2,7 +2,6 @@ package internalhttp
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 
 type Server struct {
 	server *http.Server
+	app    Application
 }
 
 type Logger interface {
@@ -26,29 +26,14 @@ type HelloHandler struct {
 	logger Logger
 }
 
-func (h HelloHandler) ServeHTTP(_ http.ResponseWriter, r *http.Request) {
-	latency, ok := r.Context().Value(LatencyKey).(time.Duration)
-
-	if !ok {
-		latency = 0
+func (h HelloHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	_, err := w.Write([]byte("Hello!"))
+	if err != nil {
+		return
 	}
-
-	h.logger.Info(
-		fmt.Sprintf(
-			"%s [%s] %s %s HTTP/%s %d %s \"%s\"",
-			r.RemoteAddr,
-			time.Now().Format(time.RFC1123Z),
-			r.Method, r.URL.Path, r.Proto,
-			http.StatusOK, // можно узнать из response ???
-			latency,
-			r.Header.Get("User-Agent"),
-		),
-	)
 }
 
-// Зачем нужен Application?
-// Зачем Logger, если в main.go в calendar уже содержит логгер? // calendar := app.New(logg, storage).
-func NewServer(logger Logger, _ Application, host string, port int) *Server {
+func NewServer(logger Logger, app Application, host string, port int) *Server {
 	mux := http.NewServeMux()
 	mux.Handle("/", HelloHandler{
 		logger: logger,
@@ -56,13 +41,14 @@ func NewServer(logger Logger, _ Application, host string, port int) *Server {
 
 	server := &http.Server{
 		Addr:         net.JoinHostPort(host, strconv.Itoa(port)),
-		Handler:      loggingMiddleware(mux),
+		Handler:      loggingMiddleware(logger, mux),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
 	return &Server{
 		server: server,
+		app:    app,
 	}
 }
 

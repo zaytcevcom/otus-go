@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -18,7 +19,7 @@ func New() *Storage {
 	}
 }
 
-func (s *Storage) CreateEvent(event storage.Event) error {
+func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -31,7 +32,7 @@ func (s *Storage) CreateEvent(event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) UpdateEvent(id string, event storage.Event) error {
+func (s *Storage) UpdateEvent(ctx context.Context, id string, event storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -49,7 +50,7 @@ func (s *Storage) UpdateEvent(id string, event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) DeleteEvent(id string) error {
+func (s *Storage) DeleteEvent(ctx context.Context, id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -62,21 +63,21 @@ func (s *Storage) DeleteEvent(id string) error {
 	return nil
 }
 
-func (s *Storage) GetEventsByDay(t time.Time) []storage.Event {
+func (s *Storage) GetEventsByDay(ctx context.Context, t time.Time) []storage.Event {
 	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	end := start.AddDate(0, 0, 1)
 
 	return s.getEventsByPeriod(start, end)
 }
 
-func (s *Storage) GetEventsByWeek(t time.Time) []storage.Event {
+func (s *Storage) GetEventsByWeek(ctx context.Context, t time.Time) []storage.Event {
 	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	end := start.AddDate(0, 0, 7)
 
 	return s.getEventsByPeriod(start, end)
 }
 
-func (s *Storage) GetEventsByMonth(t time.Time) []storage.Event {
+func (s *Storage) GetEventsByMonth(ctx context.Context, t time.Time) []storage.Event {
 	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	end := start.AddDate(0, 1, 0)
 

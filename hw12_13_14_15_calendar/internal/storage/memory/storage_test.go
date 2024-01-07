@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -20,26 +21,28 @@ func TestStorage(t *testing.T) {
 		TimeTo:   timeTo,
 	}
 
-	t.Run("CreateEvent", func(t *testing.T) {
-		err := s.CreateEvent(event1)
+	ctx := context.Background()
 
-		assert.Nil(t, err)
+	t.Run("CreateEvent", func(t *testing.T) {
+		err := s.CreateEvent(ctx, event1)
+
+		assert.NoError(t, err)
 	})
 
 	t.Run("CreateEventDuplicate", func(t *testing.T) {
-		err := s.CreateEvent(event1)
+		err := s.CreateEvent(ctx, event1)
 
 		assert.ErrorIs(t, err, storage.ErrDateBusy)
 	})
 
 	t.Run("DeleteEvent", func(t *testing.T) {
-		err := s.DeleteEvent(event1.ID)
+		err := s.DeleteEvent(ctx, event1.ID)
 
 		assert.Nil(t, err)
 	})
 
 	t.Run("DeleteUnknown", func(t *testing.T) {
-		err := s.DeleteEvent("unknownID")
+		err := s.DeleteEvent(ctx, "unknownID")
 
 		assert.ErrorIs(t, err, storage.ErrEventNotFound)
 	})

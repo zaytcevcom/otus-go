@@ -21,12 +21,12 @@ type Logger interface {
 }
 
 type Storage interface {
-	CreateEvent(event storage.Event) error
-	UpdateEvent(id string, event storage.Event) error
-	DeleteEvent(id string) error
-	GetEventsByDay(time time.Time) []storage.Event
-	GetEventsByWeek(time time.Time) []storage.Event
-	GetEventsByMonth(time time.Time) []storage.Event
+	CreateEvent(ctx context.Context, event storage.Event) error
+	UpdateEvent(ctx context.Context, id string, event storage.Event) error
+	DeleteEvent(ctx context.Context, id string) error
+	GetEventsByDay(ctx context.Context, time time.Time) []storage.Event
+	GetEventsByWeek(ctx context.Context, time time.Time) []storage.Event
+	GetEventsByMonth(ctx context.Context, time time.Time) []storage.Event
 }
 
 func New(logger Logger, storage Storage) *App {
@@ -36,12 +36,10 @@ func New(logger Logger, storage Storage) *App {
 	}
 }
 
-// Зачем тут нужен контекст?
-func (a *App) CreateEvent(_ context.Context, id, title string) (string, error) {
-	err := a.storage.CreateEvent(storage.Event{ID: id, Title: title})
+func (a *App) CreateEvent(ctx context.Context, id, title string) (string, error) {
+	err := a.storage.CreateEvent(ctx, storage.Event{ID: id, Title: title})
 
 	if errors.Is(err, storage.ErrDateBusy) {
-		a.logger.Debug(storage.ErrDateBusy.Error())
 		return "", storage.ErrDateBusy
 	} else if err != nil {
 		return "", err

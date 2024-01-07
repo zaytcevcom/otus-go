@@ -35,6 +35,8 @@ func main() {
 		return
 	}
 
+	fmt.Println(config)
+
 	logg := logger.New(config.Logger.Level, nil)
 
 	var storage app.Storage
@@ -65,7 +67,7 @@ func main() {
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	logg.Info(fmt.Sprintf("calendar is running on %s:%d", config.Server.Host, config.Server.Port))
 
 	if err := server.Start(ctx); err != nil {
 		logg.Error("failed to start http server: " + err.Error())
