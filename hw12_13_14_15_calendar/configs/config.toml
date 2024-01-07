@@ -1,5 +1,8 @@
+isMemoryStorage = true
+
 [logger]
 level = "INFO"
 
-# TODO
-# ...
+[server]
+host = "localhost"
+port = 8888
