@@ -1,7 +1,6 @@
 package hw05parallelexecution
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 	"sync/atomic"
@@ -34,7 +33,7 @@ func TestRun(t *testing.T) {
 		maxErrorsCount := 23
 		err := Run(tasks, workersCount, maxErrorsCount)
 
-		require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
+		require.ErrorIs(t, err, ErrErrorsLimitExceeded)
 		require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
 	})
 
@@ -87,7 +86,7 @@ func TestRun(t *testing.T) {
 		maxErrorsCount := 0
 		err := Run(tasks, workersCount, maxErrorsCount)
 
-		require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
+		require.ErrorIs(t, err, ErrErrorsLimitExceeded)
 	})
 
 	t.Run("zero max value without errors", func(t *testing.T) {
