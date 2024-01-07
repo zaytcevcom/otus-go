@@ -2,7 +2,6 @@ package hw10programoptimization
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"strings"
 
@@ -12,48 +11,46 @@ import (
 type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	u, err := getUsers(r)
-	if err != nil {
-		return nil, fmt.Errorf("get users error: %w", err)
-	}
-
-	return countDomains(u, domain)
-}
-
-type users [100_000]User
-
-func getUsers(r io.Reader) (result users, err error) {
-	scanner := bufio.NewScanner(r)
-
-	var i int
-	for scanner.Scan() {
-		var user User
-		if err = easyjson.Unmarshal(scanner.Bytes(), &user); err != nil {
-			return result, err
-		}
-		result[i] = user
-		i++
-	}
-
-	if err = scanner.Err(); err != nil {
-		return result, err
-	}
-	return
-}
-
-func countDomains(u users, domain string) (DomainStat, error) {
 	result := make(DomainStat)
+	ch := make(chan User)
+
+	go func() {
+		defer close(ch)
+
+		err := getUsers(r, ch)
+		if err != nil {
+			return
+		}
+	}()
 
 	domain = strings.ToLower(domain)
 
-	for _, user := range u {
-		splitEmail := strings.Split(user.Email, "@")
-		domainName := strings.ToLower(splitEmail[len(splitEmail)-1])
-
-		if strings.HasSuffix(domainName, "."+domain) {
-			result[domainName]++
-		}
+	for user := range ch {
+		countDomains(user, domain, result)
 	}
 
 	return result, nil
+}
+
+func getUsers(r io.Reader, ch chan<- User) error {
+	scanner := bufio.NewScanner(r)
+
+	for scanner.Scan() {
+		var user User
+		if err := easyjson.Unmarshal(scanner.Bytes(), &user); err != nil {
+			return err
+		}
+		ch <- user
+	}
+
+	return scanner.Err()
+}
+
+func countDomains(u User, domain string, result DomainStat) {
+	splitEmail := strings.Split(u.Email, "@")
+	domainName := strings.ToLower(splitEmail[len(splitEmail)-1])
+
+	if strings.HasSuffix(domainName, "."+domain) {
+		result[domainName]++
+	}
 }
