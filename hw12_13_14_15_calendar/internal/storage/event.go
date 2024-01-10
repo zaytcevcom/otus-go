@@ -16,6 +16,6 @@ type Event struct {
 }
 
 var (
-	ErrDateBusy      = errors.New("the date is already booked by another event")
+	ErrDateBusy      = errors.New("this date is already booked by another event")
 	ErrEventNotFound = errors.New("event not found")
 )

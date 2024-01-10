@@ -4,7 +4,8 @@ import "github.com/spf13/viper"
 
 type Config struct {
 	Logger          LoggerConf
-	Server          ServerConf
+	ServerHTTP      ServerHTTPConf
+	ServerGRPC      ServerGRPCConf
 	IsMemoryStorage bool
 }
 
@@ -12,7 +13,12 @@ type LoggerConf struct {
 	Level string
 }
 
-type ServerConf struct {
+type ServerHTTPConf struct {
+	Host string
+	Port int
+}
+
+type ServerGRPCConf struct {
 	Host string
 	Port int
 }
