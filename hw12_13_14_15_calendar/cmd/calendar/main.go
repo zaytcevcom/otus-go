@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	sqlstorage "github.com/zaytcevcom/otus-go/hw12_13_14_15_calendar/internal/storage/sql"
 	"os"
 	"os/signal"
 	"syscall"
@@ -37,24 +38,30 @@ func main() {
 
 	fmt.Println(config)
 
+	ctx, cancel := signal.NotifyContext(context.Background(),
+		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
+
 	logg := logger.New(config.Logger.Level, nil)
 
-	var storage app.Storage
-
-	if config.IsMemoryStorage {
-		storage = memorystorage.New()
-	} else {
-		fmt.Println("No SQL storage")
+	storage, err := getStorage(ctx, config)
+	if err != nil {
+		fmt.Println("Failed to get storage: ", err)
 		return
+	}
+
+	if sqlStorage, ok := storage.(*sqlstorage.Storage); ok {
+		defer func(sqlStorage *sqlstorage.Storage, _ context.Context) {
+			err := sqlStorage.Close(ctx)
+			if err != nil {
+				fmt.Println("Cannot close psql connection", err)
+			}
+		}(sqlStorage, ctx)
 	}
 
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(logg, calendar, config.Server.Host, config.Server.Port)
-
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer cancel()
 
 	go func() {
 		<-ctx.Done()
@@ -74,4 +81,19 @@ func main() {
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}
+}
+
+func getStorage(ctx context.Context, config Config) (app.Storage, error) {
+	if config.IsMemoryStorage {
+		storage := memorystorage.New()
+		return storage, nil
+	}
+
+	storageSql := sqlstorage.New(config.Postgres.Dsn)
+
+	if err := storageSql.Connect(ctx); err != nil {
+		return nil, fmt.Errorf("cannot connect to psql: %w", err)
+	}
+
+	return storageSql, nil
 }

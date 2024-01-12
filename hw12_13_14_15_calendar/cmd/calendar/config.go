@@ -6,6 +6,7 @@ type Config struct {
 	Logger          LoggerConf
 	Server          ServerConf
 	IsMemoryStorage bool
+	Postgres        PostgresConf
 }
 
 type LoggerConf struct {
@@ -15,6 +16,10 @@ type LoggerConf struct {
 type ServerConf struct {
 	Host string
 	Port int
+}
+
+type PostgresConf struct {
+	Dsn string
 }
 
 func LoadConfig(path string) (Config, error) {
