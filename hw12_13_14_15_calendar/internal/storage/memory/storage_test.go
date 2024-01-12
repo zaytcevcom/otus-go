@@ -24,13 +24,13 @@ func TestStorage(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("CreateEvent", func(t *testing.T) {
-		err := s.CreateEvent(ctx, event1)
+		_, err := s.CreateEvent(ctx, event1)
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("CreateEventDuplicate", func(t *testing.T) {
-		err := s.CreateEvent(ctx, event1)
+		_, err := s.CreateEvent(ctx, event1)
 
 		assert.ErrorIs(t, err, storage.ErrDateBusy)
 	})

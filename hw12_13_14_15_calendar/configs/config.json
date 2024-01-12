@@ -6,8 +6,12 @@
   "logger": {
     "level": "INFO"
   },
-  "server": {
+  "serverHTTP": {
     "host": "localhost",
     "port": 8888
+  },
+  "serverGRPC": {
+    "host": "localhost",
+    "port": 8899
   }
 }

@@ -7,7 +7,7 @@ CREATE TABLE events (
    time_to TIMESTAMP NOT NULL,
    description TEXT,
    user_id VARCHAR(255) NOT NULL,
-   notification_time INTERVAL
+   notification_time INT
 );
 -- +goose StatementEnd
 
