@@ -43,7 +43,7 @@ func (s *Storage) GetEventsByDay(ctx context.Context, t time.Time) (events []sto
 		    DATE(time_from) = DATE($1)`
 	err := s.db.SelectContext(ctx, &events, query, t)
 	if err != nil {
-		return []storage.Event{}
+		return nil
 	}
 	return events
 }
@@ -60,7 +60,7 @@ func (s *Storage) GetEventsByWeek(ctx context.Context, t time.Time) (events []st
 	err := s.db.SelectContext(ctx, &events, query, t)
 
 	if err != nil {
-		return []storage.Event{}
+		return nil
 	}
 	return events
 }
@@ -76,7 +76,7 @@ func (s *Storage) GetEventsByMonth(ctx context.Context, t time.Time) (events []s
 	`
 	err := s.db.SelectContext(ctx, &events, query, t)
 	if err != nil {
-		return []storage.Event{}
+		return nil
 	}
 	return events
 }

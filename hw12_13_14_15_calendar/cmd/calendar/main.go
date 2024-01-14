@@ -50,14 +50,12 @@ func main() {
 		return
 	}
 
-	if sqlStorage, ok := storage.(*sqlstorage.Storage); ok {
-		defer func(sqlStorage *sqlstorage.Storage, _ context.Context) {
-			err := sqlStorage.Close(ctx)
-			if err != nil {
-				fmt.Println("Cannot close psql connection", err)
-			}
-		}(sqlStorage, ctx)
-	}
+	defer func(storage app.Storage, ctx context.Context) {
+		err := storage.Close(ctx)
+		if err != nil {
+			fmt.Println("Cannot close storage connection", err)
+		}
+	}(storage, ctx)
 
 	calendar := app.New(logg, storage)
 
@@ -84,16 +82,17 @@ func main() {
 }
 
 func getStorage(ctx context.Context, config Config) (app.Storage, error) {
+	var storage app.Storage
+
 	if config.IsMemoryStorage {
-		storage := memorystorage.New()
-		return storage, nil
+		storage = memorystorage.New()
+	} else {
+		storage = sqlstorage.New(config.Postgres.Dsn)
 	}
 
-	storageSql := sqlstorage.New(config.Postgres.Dsn)
-
-	if err := storageSql.Connect(ctx); err != nil {
-		return nil, fmt.Errorf("cannot connect to psql: %w", err)
+	if err := storage.Connect(ctx); err != nil {
+		return nil, fmt.Errorf("cannot connect to storage: %w", err)
 	}
 
-	return storageSql, nil
+	return storage, nil
 }

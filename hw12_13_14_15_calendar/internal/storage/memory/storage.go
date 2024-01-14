@@ -84,6 +84,14 @@ func (s *Storage) GetEventsByMonth(ctx context.Context, t time.Time) []storage.E
 	return s.getEventsByPeriod(start, end)
 }
 
+func (s *Storage) Connect(_ context.Context) error {
+	return nil
+}
+
+func (s *Storage) Close(_ context.Context) error {
+	return nil
+}
+
 func (s *Storage) getEventsByPeriod(start time.Time, end time.Time) []storage.Event {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

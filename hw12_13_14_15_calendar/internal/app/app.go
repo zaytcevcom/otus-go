@@ -27,6 +27,8 @@ type Storage interface {
 	GetEventsByDay(ctx context.Context, time time.Time) []storage.Event
 	GetEventsByWeek(ctx context.Context, time time.Time) []storage.Event
 	GetEventsByMonth(ctx context.Context, time time.Time) []storage.Event
+	Connect(ctx context.Context) error
+	Close(ctx context.Context) error
 }
 
 func New(logger Logger, storage Storage) *App {
