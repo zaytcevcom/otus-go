@@ -1,4 +1,7 @@
 BIN := "./bin/calendar"
+BIN_SCHEDULER := "./bin/calendar_scheduler"
+BIN_SENDER := "./bin/calendar_sender"
+
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -9,6 +12,7 @@ generate:
 
 init: docker-down-clear \
 	clear \
+	docker-network \
 	docker-pull docker-build docker-up \
 	wait-postgres init-postgres migrations-migrate
 
@@ -31,6 +35,9 @@ docker-down:
 docker-down-clear:
 	docker compose down -v --remove-orphans
 
+docker-network:
+	docker network create calendar_network || true
+
 wait-postgres:
 	sleep 10
 
@@ -39,9 +46,17 @@ clear:
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(BIN_SCHEDULER) ./cmd/calendar_scheduler
+	go build -v -o $(BIN_SENDER) ./cmd/calendar_sender
 
-run: build
-	$(BIN) -config ./configs/config.toml
+run:
+	$(BIN) -config ./configs/calendar/config.toml
+
+run-scheduler:
+	$(BIN_SCHEDULER) -config ./configs/calendar_scheduler/config.toml
+
+run-sender:
+	$(BIN_SENDER) -config ./configs/calendar_sender/config.toml
 
 build-img:
 	docker build \

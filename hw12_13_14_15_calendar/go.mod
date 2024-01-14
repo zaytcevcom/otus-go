@@ -8,6 +8,7 @@ require (
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/spf13/viper v1.18.2
+	github.com/streadway/amqp v1.1.0
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0

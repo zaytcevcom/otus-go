@@ -1,0 +1,7 @@
+[logger]
+level = "DEBUG"
+
+[rabbit]
+uri = "amqp://guest:guest@localhost:5672/"
+exchange = "calendar-ex"
+queue = "calendar-q"
