@@ -73,7 +73,7 @@ func NewRabbitMQ(logger Logger, uri string, exchange string, queue string) (*Rab
 }
 
 func (r *RabbitMQ) Publish(body string) error {
-	err := r.channel.Publish(
+	return r.channel.Publish(
 		r.exchange,
 		r.queue.Name,
 		false,
@@ -86,11 +86,6 @@ func (r *RabbitMQ) Publish(body string) error {
 			DeliveryMode:    amqp.Persistent,
 			Priority:        0,
 		})
-
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (r *RabbitMQ) Subscribe(handler func(body []byte) error) error {
@@ -119,4 +114,8 @@ func (r *RabbitMQ) Subscribe(handler func(body []byte) error) error {
 	}()
 
 	return nil
+}
+
+func (r *RabbitMQ) Close() error {
+	return r.conn.Close()
 }

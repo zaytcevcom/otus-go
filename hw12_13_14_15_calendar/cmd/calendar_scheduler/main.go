@@ -59,7 +59,9 @@ func main() {
 	go func() {
 		<-ctx.Done()
 
-		s.Stop()
+		if err := s.Stop(); err != nil {
+			fmt.Println("Cannot close rabbit connection", err)
+		}
 	}()
 
 	if err := s.Start(ctx, config.Scheduler.Interval); err != nil {

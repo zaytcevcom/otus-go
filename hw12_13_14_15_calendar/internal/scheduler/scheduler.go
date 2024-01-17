@@ -30,6 +30,7 @@ type Storage interface {
 
 type MessageBroker interface {
 	Publish(body string) error
+	Close() error
 }
 
 func New(logger Logger, storage Storage, broker MessageBroker) *Scheduler {
@@ -69,8 +70,9 @@ func (s Scheduler) Start(ctx context.Context, interval int) error {
 	}
 }
 
-func (s Scheduler) Stop() {
+func (s Scheduler) Stop() error {
 	close(s.doneCh)
+	return s.broker.Close()
 }
 
 func (s Scheduler) notifyEvents(ctx context.Context, t time.Time) error {
