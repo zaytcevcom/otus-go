@@ -27,6 +27,8 @@ type Storage interface {
 	CreateEvent(ctx context.Context, event storage.Event) (string, error)
 	UpdateEvent(ctx context.Context, id string, event storage.Event) error
 	DeleteEvent(ctx context.Context, id string) error
+	Connect(ctx context.Context) error
+	Close(ctx context.Context) error
 }
 
 func New(logger Logger, storage Storage) *App {

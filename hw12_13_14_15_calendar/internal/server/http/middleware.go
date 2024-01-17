@@ -6,12 +6,26 @@ import (
 	"time"
 )
 
+type LoggingResponseWriter struct {
+	http.ResponseWriter
+	ResponseCode int
+}
+
+func (l *LoggingResponseWriter) WriteHeader(code int) {
+	l.ResponseCode = code
+	l.ResponseWriter.WriteHeader(code)
+}
+
 func loggingMiddleware(logger Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		startTime := time.Now()
 
-		next.ServeHTTP(w, r)
+		lrw := LoggingResponseWriter{
+			ResponseWriter: w,
+			ResponseCode:   http.StatusOK,
+		}
+		next.ServeHTTP(&lrw, r)
 
 		latency := time.Since(startTime)
 
@@ -21,7 +35,7 @@ func loggingMiddleware(logger Logger, next http.Handler) http.Handler {
 				r.RemoteAddr,
 				time.Now().Format(time.RFC1123Z),
 				r.Method, r.URL.Path, r.Proto,
-				http.StatusOK, // можно узнать из response ???
+				lrw.ResponseCode,
 				latency,
 				r.Header.Get("User-Agent"),
 			),

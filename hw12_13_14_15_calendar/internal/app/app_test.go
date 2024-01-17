@@ -44,6 +44,16 @@ func (ms *MockStorage) DeleteEvent(ctx context.Context, id string) error {
 	return args.Error(0)
 }
 
+func (ms *MockStorage) Connect(ctx context.Context) error {
+	args := ms.Called(ctx)
+	return args.Error(0)
+}
+
+func (ms *MockStorage) Close(ctx context.Context) error {
+	args := ms.Called(ctx)
+	return args.Error(0)
+}
+
 type MockLogger struct {
 	mock.Mock
 }

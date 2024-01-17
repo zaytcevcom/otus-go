@@ -84,6 +84,14 @@ func (s *Storage) DeleteEvent(ctx context.Context, id string) error {
 	return nil
 }
 
+func (s *Storage) Connect(_ context.Context) error {
+	return nil
+}
+
+func (s *Storage) Close(_ context.Context) error {
+	return nil
+}
+
 func (s *Storage) getEventsByPeriod(start time.Time, end time.Time) []storage.Event {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -91,9 +99,9 @@ func (s *Storage) getEventsByPeriod(start time.Time, end time.Time) []storage.Ev
 	var events []storage.Event
 
 	for _, event := range s.events {
-		//if event.TimeFrom.After(start) && event.TimeFrom.Before(end) {
-		events = append(events, event)
-		//}
+		if event.TimeFrom.After(start) && event.TimeFrom.Before(end) {
+			events = append(events, event)
+		}
 	}
 
 	return events
