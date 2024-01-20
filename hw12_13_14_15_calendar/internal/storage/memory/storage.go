@@ -19,17 +19,38 @@ func New() *Storage {
 	}
 }
 
-func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) error {
+func (s *Storage) GetEventsByDay(ctx context.Context, t time.Time) []storage.Event {
+	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	end := start.AddDate(0, 0, 1)
+
+	return s.getEventsByPeriod(start, end)
+}
+
+func (s *Storage) GetEventsByWeek(ctx context.Context, t time.Time) []storage.Event {
+	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	end := start.AddDate(0, 0, 7)
+
+	return s.getEventsByPeriod(start, end)
+}
+
+func (s *Storage) GetEventsByMonth(ctx context.Context, t time.Time) []storage.Event {
+	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	end := start.AddDate(0, 1, 0)
+
+	return s.getEventsByPeriod(start, end)
+}
+
+func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.isEventTimeBusy(event.TimeFrom, "") {
-		return storage.ErrDateBusy
+		return "", storage.ErrDateBusy
 	}
 
 	s.events[event.ID] = event
 
-	return nil
+	return event.ID, nil
 }
 
 func (s *Storage) UpdateEvent(ctx context.Context, id string, event storage.Event) error {
@@ -61,27 +82,6 @@ func (s *Storage) DeleteEvent(ctx context.Context, id string) error {
 	delete(s.events, id)
 
 	return nil
-}
-
-func (s *Storage) GetEventsByDay(ctx context.Context, t time.Time) []storage.Event {
-	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
-	end := start.AddDate(0, 0, 1)
-
-	return s.getEventsByPeriod(start, end)
-}
-
-func (s *Storage) GetEventsByWeek(ctx context.Context, t time.Time) []storage.Event {
-	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
-	end := start.AddDate(0, 0, 7)
-
-	return s.getEventsByPeriod(start, end)
-}
-
-func (s *Storage) GetEventsByMonth(ctx context.Context, t time.Time) []storage.Event {
-	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
-	end := start.AddDate(0, 1, 0)
-
-	return s.getEventsByPeriod(start, end)
 }
 
 func (s *Storage) Connect(_ context.Context) error {

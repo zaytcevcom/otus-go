@@ -4,9 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	internalgrpc "github.com/zaytcevcom/otus-go/hw12_13_14_15_calendar/internal/server/grpc"
 	sqlstorage "github.com/zaytcevcom/otus-go/hw12_13_14_15_calendar/internal/storage/sql"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -59,7 +61,8 @@ func main() {
 
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar, config.Server.Host, config.Server.Port)
+	serverHTTP := internalhttp.NewServer(logg, calendar, config.ServerHTTP.Host, config.ServerHTTP.Port)
+	serverGRPC := internalgrpc.NewServer(logg, calendar, config.ServerGRPC.Host, config.ServerGRPC.Port)
 
 	go func() {
 		<-ctx.Done()
@@ -67,18 +70,39 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
+		if err := serverHTTP.Stop(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
+		}
+
+		serverGRPC.Stop()
+	}()
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		logg.Info(fmt.Sprintf("calendar HTTP is running on %s:%d", config.ServerHTTP.Host, config.ServerHTTP.Port))
+
+		if err := serverHTTP.Start(ctx); err != nil {
+			logg.Error("failed to start http server: " + err.Error())
+			cancel()
+			os.Exit(1) //nolint:gocritic
 		}
 	}()
 
-	logg.Info(fmt.Sprintf("calendar is running on %s:%d", config.Server.Host, config.Server.Port))
+	go func() {
+		defer wg.Done()
+		logg.Info(fmt.Sprintf("calendar GRPC is running on %s:%d", config.ServerGRPC.Host, config.ServerGRPC.Port))
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
-	}
+		if err := serverGRPC.Start(ctx); err != nil {
+			logg.Error("failed to start grpc server: " + err.Error())
+			cancel()
+			os.Exit(1) //nolint:gocritic
+		}
+	}()
+
+	wg.Wait()
 }
 
 func getStorage(ctx context.Context, config Config) (app.Storage, error) {

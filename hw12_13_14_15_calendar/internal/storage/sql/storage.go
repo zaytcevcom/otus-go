@@ -81,7 +81,7 @@ func (s *Storage) GetEventsByMonth(ctx context.Context, t time.Time) (events []s
 	return events
 }
 
-func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) (err error) {
+func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) (id string, err error) {
 	query := `
 		INSERT INTO events (
 			id, title, time_from, time_to, description, user_id, notification_time
@@ -91,7 +91,7 @@ func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) (err err
 	`
 	event.ID = uuid.NewString()
 	_, err = s.db.NamedExecContext(ctx, query, event)
-	return err
+	return event.ID, err
 }
 
 func (s *Storage) UpdateEvent(ctx context.Context, id string, event storage.Event) (err error) {
