@@ -1,66 +1,56 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
-	"fmt"
+	"bufio"
 	"io"
-	"regexp"
 	"strings"
-)
 
-type User struct {
-	ID       int
-	Name     string
-	Username string
-	Email    string
-	Phone    string
-	Password string
-	Address  string
-}
+	"github.com/mailru/easyjson"
+)
 
 type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	u, err := getUsers(r)
-	if err != nil {
-		return nil, fmt.Errorf("get users error: %w", err)
-	}
-	return countDomains(u, domain)
-}
+	result := make(DomainStat)
+	ch := make(chan User)
 
-type users [100_000]User
+	go func() {
+		defer close(ch)
 
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return
-	}
-
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
+		err := getUsers(r, ch)
+		if err != nil {
 			return
 		}
-		result[i] = user
+	}()
+
+	domain = strings.ToLower(domain)
+
+	for user := range ch {
+		countDomains(user, domain, result)
 	}
-	return
+
+	return result, nil
 }
 
-func countDomains(u users, domain string) (DomainStat, error) {
-	result := make(DomainStat)
+func getUsers(r io.Reader, ch chan<- User) error {
+	scanner := bufio.NewScanner(r)
 
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
-		if err != nil {
-			return nil, err
+	for scanner.Scan() {
+		var user User
+		if err := easyjson.Unmarshal(scanner.Bytes(), &user); err != nil {
+			return err
 		}
-
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
-		}
+		ch <- user
 	}
-	return result, nil
+
+	return scanner.Err()
+}
+
+func countDomains(u User, domain string, result DomainStat) {
+	splitEmail := strings.Split(u.Email, "@")
+	domainName := strings.ToLower(splitEmail[len(splitEmail)-1])
+
+	if strings.HasSuffix(domainName, "."+domain) {
+		result[domainName]++
+	}
 }
