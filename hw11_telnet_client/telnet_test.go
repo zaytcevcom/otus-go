@@ -62,4 +62,19 @@ func TestTelnetClient(t *testing.T) {
 
 		wg.Wait()
 	})
+
+	t.Run("connect to unavailable host", func(t *testing.T) {
+		unreachableHost := "127.0.0.1:12345"
+
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+
+		client := NewTelnetClient(unreachableHost, timeout, io.NopCloser(in), out)
+		err = client.Connect()
+
+		require.Error(t, err)
+	})
 }
