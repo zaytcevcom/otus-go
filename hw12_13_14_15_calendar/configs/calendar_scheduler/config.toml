@@ -1,0 +1,13 @@
+[postgres]
+dsn = "host=localhost port=5432 user=calendar_user password=calendar_pass dbname=calendar sslmode=disable"
+
+[logger]
+level = "DEBUG"
+
+[rabbit]
+uri = "amqp://guest:guest@localhost:5672/"
+exchange = "calendar-ex"
+queue = "calendar-q"
+
+[scheduler]
+interval = 10
