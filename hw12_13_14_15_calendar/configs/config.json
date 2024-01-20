@@ -1,0 +1,13 @@
+{
+  "isMemoryStorage": false,
+  "postgres": {
+    "dsn": "host=localhost port=5432 user=calendar_user password=calendar_pass dbname=calendar sslmode=disable"
+  },
+  "logger": {
+    "level": "INFO"
+  },
+  "server": {
+    "host": "localhost",
+    "port": 8888
+  }
+}
