@@ -1,15 +1,15 @@
 isMemoryStorage = false
 
 [postgres]
-dsn = "host=localhost port=5432 user=calendar_user password=calendar_pass dbname=calendar sslmode=disable"
+dsn = "host=postgres port=5432 user=test password=test dbname=calendar sslmode=disable"
 
 [logger]
 level = "INFO"
 
 [serverHTTP]
-host = "localhost"
-port = 8888
+host = ""
+port = 8080
 
 [serverGRPC]
-host = "localhost"
-port = 8899
+host = ""
+port = 8081
