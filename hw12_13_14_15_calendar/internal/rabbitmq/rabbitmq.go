@@ -103,15 +103,13 @@ func (r *RabbitMQ) Subscribe(handler func(body []byte) error) error {
 		return err
 	}
 
-	go func() {
-		for d := range messages {
-			err := handler(d.Body)
+	for d := range messages {
+		err := handler(d.Body)
 
-			if err != nil {
-				r.logger.Error(err.Error())
-			}
+		if err != nil {
+			r.logger.Error(err.Error())
 		}
-	}()
+	}
 
 	return nil
 }
