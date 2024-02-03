@@ -1,0 +1,9 @@
+name: calendar
+replicaCount: 1
+image:
+  repository: zaytcevcom/go-calendar
+  version: 1.0.1
+ports:
+  http: 8080
+  grpc: 8081
+startCommand: "sleep 5 && ./opt/app/bin --config configs/calendar/config.toml"

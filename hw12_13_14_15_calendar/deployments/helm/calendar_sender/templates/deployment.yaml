@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar-sender-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      containers:
+        - name: {{ .Values.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.version }}"
+          command: ["sh", "-c", "{{ .Values.startCommand }}"]
+          volumeMounts:
+            - name: calendar-sender-config
+              mountPath: /configs/calendar_sender
+      volumes:
+        - name: calendar-sender-config
+          configMap:
+            name: calendar-sender-config

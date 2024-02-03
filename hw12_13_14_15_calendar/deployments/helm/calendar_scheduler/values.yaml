@@ -1,0 +1,6 @@
+name: calendar-scheduler
+replicaCount: 1
+image:
+  repository: zaytcevcom/go-calendar-scheduler
+  version: 1.0.1
+startCommand: "sleep 5 && ./opt/app/bin --config configs/calendar_scheduler/config.toml"

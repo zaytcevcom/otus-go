@@ -1,0 +1,104 @@
+version: '3'
+services:
+
+  calendar:
+    container_name: calendar
+    build:
+      context: ..
+      dockerfile: ./build/calendar/Dockerfile
+    restart: always
+    volumes:
+      - ../configs/calendar:/configs/calendar
+    command: sh -c "sleep 5 && ./opt/app/bin --config configs/calendar/config.toml"
+    ports:
+      - "8888:8080"
+      - "8889:8081"
+    depends_on:
+      - postgres
+    networks:
+      - default
+      - calendar_network
+
+  calendar_scheduler:
+    container_name: calendar_scheduler
+    build:
+      context: ..
+      dockerfile: ./build/calendar_scheduler/Dockerfile
+    restart: always
+    volumes:
+      - ../configs/calendar_scheduler:/configs/calendar_scheduler
+    command: sh -c "sleep 5 && ./opt/app/bin --config configs/calendar_scheduler/config.toml"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - default
+      - calendar_network
+
+  calendar_sender:
+    container_name: calendar_sender
+    build:
+      context: ..
+      dockerfile: ./build/calendar_sender/Dockerfile
+    restart: always
+    volumes:
+      - ../configs/calendar_sender:/configs/calendar_sender
+    command: sh -c "sleep 5 && ./opt/app/bin --config configs/calendar_sender/config.toml"
+    depends_on:
+      - rabbitmq
+    networks:
+      - default
+      - calendar_network
+
+  postgres:
+    image: postgres:13
+    container_name: calendar_postgres
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    volumes:
+      - ../scripts/setup.sql:/docker-entrypoint-initdb.d/setup.sql
+      - data-postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - default
+      - calendar_network
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: calendar_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - data-rabbitmq:/var/lib/rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - default
+      - calendar_network
+
+  integration_tests:
+    build:
+      context: ..
+      dockerfile: ./test/Dockerfile
+    command: "true"
+    links:
+      - calendar
+    networks:
+      - default
+      - calendar_network
+
+networks:
+  calendar_network:
+    driver: bridge
+
+volumes:
+  data-calendar:
+  data-calendar_scheduler:
+  data-calendar_sender:
+  data-postgres:
+  data-rabbitmq:
+  data-tests:

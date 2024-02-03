@@ -14,26 +14,26 @@ init: docker-down-clear \
 	clear \
 	docker-network \
 	docker-pull docker-build docker-up \
-	wait-postgres init-postgres migrations-migrate
+	wait-postgres migrations-migrate
 
-up: docker-up
+up: docker-network docker-up wait-postgres migrations-migrate
 down: docker-down
 restart: down up
 
 docker-pull:
-	docker compose pull
+	docker compose -f ./deployments/docker-compose.yml pull
 
 docker-build:
-	docker compose build --pull
+	docker compose -f ./deployments/docker-compose.yml build --pull
 
 docker-up:
-	docker-compose up -d
+	docker compose -f ./deployments/docker-compose.yml up -d
 
 docker-down:
-	docker compose down --remove-orphans
+	docker compose -f ./deployments/docker-compose.yml down --remove-orphans
 
 docker-down-clear:
-	docker compose down -v --remove-orphans
+	docker compose -f ./deployments/docker-compose.yml down -v --remove-orphans
 
 docker-network:
 	docker network create calendar_network || true
@@ -42,21 +42,12 @@ wait-postgres:
 	sleep 10
 
 clear:
-	rm -rf var/*
+	rm -rf var/postgres/* var/rabbitmq/*
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 	go build -v -o $(BIN_SCHEDULER) ./cmd/calendar_scheduler
 	go build -v -o $(BIN_SENDER) ./cmd/calendar_sender
-
-run:
-	$(BIN) -config ./configs/calendar/config.toml
-
-run-scheduler:
-	$(BIN_SCHEDULER) -config ./configs/calendar_scheduler/config.toml
-
-run-sender:
-	$(BIN_SENDER) -config ./configs/calendar_sender/config.toml
 
 build-img:
 	docker build \
@@ -86,16 +77,104 @@ lint: install-lint-deps
 
 .PHONY: build run build-img run-img version test lint
 
-init-postgres:
-	docker exec -it calendar_postgres bash -c "\
-		psql -Utest -dtest -c 'create database calendar;'; \
-		psql -Utest -dtest -c 'create user calendar_user with encrypted password '\''calendar_pass'\'';'; \
-		psql -Utest -dtest -c 'grant all privileges on database calendar to calendar_user;'; \
-    "
-
 # go get -u github.com/pressly/goose/cmd/goose
 # brew install goose
 # goose -dir migrations create init sql
 
 migrations-migrate:
-	goose -dir migrations postgres "user=calendar_user password=calendar_pass dbname=calendar host=localhost sslmode=disable" up
+	goose -dir migrations postgres "user=test password=test dbname=calendar host=localhost sslmode=disable" up
+
+integration-tests:
+	set -e ;\
+	docker compose -f ./deployments/docker-compose.test.yml up --build -d ;\
+	test_status_code=0 ;\
+	sleep 10 ;\
+	goose -dir migrations postgres "user=test password=test dbname=calendar host=localhost sslmode=disable" up ;\
+	docker compose -f ./deployments/docker-compose.test.yml run integration_tests go test || test_status_code=$$? ;\
+	docker compose -f ./deployments/docker-compose.test.yml down \
+                --rmi local \
+        		--volumes \
+        		--remove-orphans \
+        		--timeout 60; \
+	echo $$test_status_code ;\
+	exit $$test_status_code ;
+
+dockerhub-deploy: dockerhub-build dockerhub-tag dockerhub-push
+
+dockerhub-build:
+	docker build -t calendar:latest -f ./build/calendar/Dockerfile .
+	docker build -t calendar-scheduler:latest -f ./build/calendar_scheduler/Dockerfile .
+	docker build -t calendar-sender:latest -f ./build/calendar_sender/Dockerfile .
+
+dockerhub-tag:
+	docker tag calendar:latest zaytcevcom/go-calendar:1.0.1
+	docker tag calendar-scheduler:latest zaytcevcom/go-calendar-scheduler:1.0.1
+	docker tag calendar-sender:latest zaytcevcom/go-calendar-sender:1.0.1
+
+dockerhub-push:
+	docker push zaytcevcom/go-calendar:1.0.1
+	docker push zaytcevcom/go-calendar-scheduler:1.0.1
+	docker push zaytcevcom/go-calendar-sender:1.0.1
+
+helm: k8s-init \
+	k8s-postgres k8s-rabbitmq \
+	helm-calendar helm-calendar-scheduler helm-calendar-sender \
+	k8s-ingress
+
+helm-calendar:
+	kubectl create configmap calendar-config --from-file=configs/calendar/config.toml && \
+	helm install calendar ./deployments/helm/calendar
+
+helm-calendar-scheduler:
+	kubectl create configmap calendar-scheduler-config --from-file=configs/calendar_scheduler/config.toml && \
+	helm install calendar-scheduler ./deployments/helm/calendar_scheduler
+
+helm-calendar-sender:
+	kubectl create configmap calendar-sender-config --from-file=configs/calendar_sender/config.toml && \
+	helm install calendar-sender ./deployments/helm/calendar_sender
+
+k8s: k8s-init \
+	k8s-postgres k8s-rabbitmq \
+	k8s-calendar k8s-calendar-scheduler k8s-calendar-sender \
+	k8s-ingress
+
+k8s-init:
+	minikube delete && \
+    minikube start
+
+k8s-postgres:
+	kubectl apply -f ./deployments/k8s/postgres
+
+k8s-rabbitmq:
+	kubectl apply -f ./deployments/k8s/rabbitmq
+
+k8s-calendar:
+	kubectl create configmap calendar-config --from-file=configs/calendar/config.toml && \
+	kubectl apply -f ./deployments/k8s/calendar
+
+k8s-calendar-scheduler:
+	kubectl create configmap calendar-scheduler-config --from-file=configs/calendar_scheduler/config.toml && \
+	kubectl apply -f ./deployments/k8s/calendar_scheduler
+
+k8s-calendar-sender:
+	kubectl create configmap calendar-sender-config --from-file=configs/calendar_sender/config.toml && \
+	kubectl apply -f ./deployments/k8s/calendar_sender
+
+k8s-ingress:
+	kubectl apply -f ./deployments/k8s/ && \
+	minikube addons enable ingress && \
+	minikube tunnel
+
+#Install:
+# brew install kubectl
+# brew install minikube
+# brew install k9s
+# brew install helm
+
+#Commands:
+# minikube start
+# minikube status
+# kubectl apply -f ./deployments/k8s/
+# kubectl get pods
+# kubectl logs {POD}
+# kubectl delete pod {POD}
