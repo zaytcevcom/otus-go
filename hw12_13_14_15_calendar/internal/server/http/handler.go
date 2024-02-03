@@ -41,6 +41,8 @@ func NewHandler(logger Logger, app Application) http.Handler {
 	}
 
 	r := mux.NewRouter()
+	r.HandleFunc("/healthz", h.Healthz).Methods(http.MethodGet)
+	r.HandleFunc("/ready", h.Ready).Methods(http.MethodGet)
 	r.HandleFunc("/events/day", h.GetEventsByDay).Methods(http.MethodGet)
 	r.HandleFunc("/events/week", h.GetEventsByWeek).Methods(http.MethodGet)
 	r.HandleFunc("/events/month", h.GetEventsByMonth).Methods(http.MethodGet)
@@ -49,6 +51,18 @@ func NewHandler(logger Logger, app Application) http.Handler {
 	r.HandleFunc("/events/{id}", h.DeleteEvent).Methods(http.MethodDelete)
 
 	return r
+}
+
+func (s *handler) Healthz(w http.ResponseWriter, r *http.Request) {
+	if _, err := fmt.Fprintf(w, "OK"); err != nil {
+		return
+	}
+}
+
+func (s *handler) Ready(w http.ResponseWriter, r *http.Request) {
+	if _, err := fmt.Fprintf(w, "OK"); err != nil {
+		return
+	}
 }
 
 func (s *handler) GetEventsByDay(w http.ResponseWriter, r *http.Request) {

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar-scheduler-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      containers:
+        - name: {{ .Values.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.version }}"
+          command: ["sh", "-c", "{{ .Values.startCommand }}"]
+          volumeMounts:
+            - name: calendar-scheduler-config
+              mountPath: /configs/calendar_scheduler
+      volumes:
+        - name: calendar-scheduler-config
+          configMap:
+            name: calendar-scheduler-config

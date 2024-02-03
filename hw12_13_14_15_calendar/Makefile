@@ -98,3 +98,83 @@ integration-tests:
         		--timeout 60; \
 	echo $$test_status_code ;\
 	exit $$test_status_code ;
+
+dockerhub-deploy: dockerhub-build dockerhub-tag dockerhub-push
+
+dockerhub-build:
+	docker build -t calendar:latest -f ./build/calendar/Dockerfile .
+	docker build -t calendar-scheduler:latest -f ./build/calendar_scheduler/Dockerfile .
+	docker build -t calendar-sender:latest -f ./build/calendar_sender/Dockerfile .
+
+dockerhub-tag:
+	docker tag calendar:latest zaytcevcom/go-calendar:1.0.1
+	docker tag calendar-scheduler:latest zaytcevcom/go-calendar-scheduler:1.0.1
+	docker tag calendar-sender:latest zaytcevcom/go-calendar-sender:1.0.1
+
+dockerhub-push:
+	docker push zaytcevcom/go-calendar:1.0.1
+	docker push zaytcevcom/go-calendar-scheduler:1.0.1
+	docker push zaytcevcom/go-calendar-sender:1.0.1
+
+helm: k8s-init \
+	k8s-postgres k8s-rabbitmq \
+	helm-calendar helm-calendar-scheduler helm-calendar-sender \
+	k8s-ingress
+
+helm-calendar:
+	kubectl create configmap calendar-config --from-file=configs/calendar/config.toml && \
+	helm install calendar ./deployments/helm/calendar
+
+helm-calendar-scheduler:
+	kubectl create configmap calendar-scheduler-config --from-file=configs/calendar_scheduler/config.toml && \
+	helm install calendar-scheduler ./deployments/helm/calendar_scheduler
+
+helm-calendar-sender:
+	kubectl create configmap calendar-sender-config --from-file=configs/calendar_sender/config.toml && \
+	helm install calendar-sender ./deployments/helm/calendar_sender
+
+k8s: k8s-init \
+	k8s-postgres k8s-rabbitmq \
+	k8s-calendar k8s-calendar-scheduler k8s-calendar-sender \
+	k8s-ingress
+
+k8s-init:
+	minikube delete && \
+    minikube start
+
+k8s-postgres:
+	kubectl apply -f ./deployments/k8s/postgres
+
+k8s-rabbitmq:
+	kubectl apply -f ./deployments/k8s/rabbitmq
+
+k8s-calendar:
+	kubectl create configmap calendar-config --from-file=configs/calendar/config.toml && \
+	kubectl apply -f ./deployments/k8s/calendar
+
+k8s-calendar-scheduler:
+	kubectl create configmap calendar-scheduler-config --from-file=configs/calendar_scheduler/config.toml && \
+	kubectl apply -f ./deployments/k8s/calendar_scheduler
+
+k8s-calendar-sender:
+	kubectl create configmap calendar-sender-config --from-file=configs/calendar_sender/config.toml && \
+	kubectl apply -f ./deployments/k8s/calendar_sender
+
+k8s-ingress:
+	kubectl apply -f ./deployments/k8s/ && \
+	minikube addons enable ingress && \
+	minikube tunnel
+
+#Install:
+# brew install kubectl
+# brew install minikube
+# brew install k9s
+# brew install helm
+
+#Commands:
+# minikube start
+# minikube status
+# kubectl apply -f ./deployments/k8s/
+# kubectl get pods
+# kubectl logs {POD}
+# kubectl delete pod {POD}

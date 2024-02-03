@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar-scheduler-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calendar-scheduler
+  template:
+    metadata:
+      labels:
+        app: calendar-scheduler
+    spec:
+      containers:
+        - name: calendar-scheduler
+          image: zaytcevcom/go-calendar-scheduler:1.0.1
+          command: ["sh", "-c", "sleep 5 && ./opt/app/bin --config configs/calendar_scheduler/config.toml"]
+          volumeMounts:
+            - name: calendar-scheduler-config
+              mountPath: /configs/calendar_scheduler
+      volumes:
+        - name: calendar-scheduler-config
+          configMap:
+            name: calendar-scheduler-config

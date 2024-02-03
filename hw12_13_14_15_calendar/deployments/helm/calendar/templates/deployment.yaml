@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar-deployment
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      containers:
+        - name: {{ .Values.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.version }}"
+          ports:
+            - containerPort: {{ .Values.ports.http }}
+            - containerPort: {{ .Values.ports.grpc }}
+          command: ["sh", "-c", "{{ .Values.startCommand }}"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /configs/calendar
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.http }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: {{ .Values.ports.http }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: config-volume
+          configMap:
+            name: calendar-config
